@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes (en vivo) · Club Amistades</title>
+  <style>
+    :root {
+      --blue:#007bff; --green:#28a745; --gray:#6c757d; --cyan:#17a2b8;
+      --text:#222; --muted:#555; --bg:#f8f9fa; --card:#fff;
+      --shadow:0 1px 3px rgba(0,0,0,0.1); --radius:10px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,Helvetica,sans-serif;margin:10px;background:var(--bg);color:var(--text)}
+    header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    header h1{flex:1;margin:0;font-size:20px;text-align:center}
+    a.btn{padding:10px 12px;border-radius:8px;text-decoration:none;color:#fff;background:var(--gray);box-shadow:var(--shadow)}
+    .filters{display:flex;gap:8px;margin:8px 0;justify-content:space-between}
+    .filters button{flex:1;padding:12px;border:none;border-radius:10px;color:#fff;font-weight:600;box-shadow:var(--shadow)}
+    #btnPrevMonth{background:var(--gray)}
+    #btnThisMonth{background:var(--blue)}
+    #btnAll{background:var(--green)}
+    section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .badge{font-size:12px;color:#fff;background:#999;border-radius:999px;padding:3px 8px}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-size:12px;color:var(--muted);text-align:left;border-bottom:1px solid #eee;padding:8px 4px}
+    tbody td{padding:10px 4px;border-bottom:1px dashed #eee}
+    tfoot td{padding:12px 4px;font-weight:bold;border-top:2px solid #ddd}
+    .num{text-align:right;white-space:nowrap}
+  </style>
+</head>
+<body>
+  <header>
+    <a class="btn" href="index.html">← Volver</a>
+    <h1>Reportes (en vivo)</h1>
+    <span style="width:76px"></span>
+  </header>
+
+  <div class="filters">
+    <button id="btnPrevMonth">◀︎ Último mes</button>
+    <button id="btnThisMonth">Mes actual</button>
+    <button id="btnAll">Totales</button>
+  </div>
+
+  <section>
+    <div class="meta">
+      <div id="rangeLabel" class="badge">Cargando…</div>
+      <div id="updated" class="badge" style="background:var(--cyan)">—</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Actividad</th>
+          <th class="num">Asistentes</th>
+          <th class="num">Subtotal (€)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="3" style="text-align:center;color:#888;padding:18px">Esperando datos…</td></tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td class="num" id="totalAsist">0</td>
+          <td class="num" id="totalMoney">0 €</td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // MISMO CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
+      authDomain: "actividadesclub-90119.firebaseapp.com",
+      projectId: "actividadesclub-90119",
+      storageBucket: "actividadesclub-90119.firebasestorage.app",
+      messagingSenderId: "888218922967",
+      appId: "1:888218922967:web:74da1f1cae0bbc72e4a592"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Utils fechas
+    function parseDocDate(id){ const [y,m,d]=id.split("-").map(Number); return new Date(y,m-1,d); }
+    function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+    function lastDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+    function monthLabel(d){ return d.toLocaleDateString("es-ES",{year:"numeric",month:"long"}); }
+    const fmt = n => (n||0).toLocaleString("es-ES");
+
+    // Estado en memoria
+    let currentRange = { from: null, to: null, label: "Totales (histórico)" };
+    const weeksData = new Map();           // weekId -> {date: Date, activities: Map<act, {asist, money}>}
+    const weekUnsubs = new Map();          // weekId -> function unsubscribe subcollection
+    let mainUnsub = null;
+    let renderTimer = null;
+
+    // Suscribir a semanas y a cada subcolección de actividades
+    function subscribeRealtime() {
+      const semanasRef = collection(db, "semanas");
+      mainUnsub = onSnapshot(semanasRef, (semSnap) => {
+        // Para cada semana, crear/actualizar listener de actividades
+        const seen = new Set();
+        semSnap.forEach(semDoc => {
+          const weekId = semDoc.id;
+          seen.add(weekId);
+
+          // crear estructura si no existe
+          if (!weeksData.has(weekId)) {
+            weeksData.set(weekId, { date: parseDocDate(weekId), activities: new Map() });
+          }
+
+          // si no existe listener para actividades, crearlo
+          if (!weekUnsubs.has(weekId)) {
+            const actsRef = collection(db, "semanas", weekId, "actividades");
+            const unsub = onSnapshot(actsRef, (actsSnap) => {
+              const entry = weeksData.get(weekId);
+              entry.activities.clear();
+              actsSnap.forEach(a => {
+                const v = a.data();
+                if (!v.actividad) return;
+                const act = v.actividad;
+                const asist = (act === "Ventas Productos") ? 0 : Number(v.asistentes||0);
+                const money = Number(v.subtotal||0);
+                entry.activities.set(act, { asist, money });
+              });
+              scheduleRender(); // re-render con debounce
+            });
+            weekUnsubs.set(weekId, unsub);
+          }
+        });
+
+        // Desuscribir semanas que ya no existen
+        for (const [weekId, unsub] of weekUnsubs) {
+          if (!seen.has(weekId)) {
+            unsub();
+            weekUnsubs.delete(weekId);
+            weeksData.delete(weekId);
+          }
+        }
+
+        scheduleRender();
+      });
+    }
+
+    function scheduleRender() {
+      const updated = document.getElementById("updated");
+      updated.textContent = "Actualizando…";
+      if (renderTimer) clearTimeout(renderTimer);
+      renderTimer = setTimeout(render, 100); // debounce corto
+    }
+
+    function inRange(date, range) {
+      if (range.from && date < range.from) return false;
+      if (range.to && date > range.to) return false;
+      return true;
+    }
+
+    function render() {
+      const tbody = document.getElementById("tbody");
+      const totalAsistEl = document.getElementById("totalAsist");
+      const totalMoneyEl = document.getElementById("totalMoney");
+      const rangeLabel = document.getElementById("rangeLabel");
+      const updated = document.getElementById("updated");
+
+      rangeLabel.textContent = currentRange.label;
+
+      // Agregar por actividad considerando el rango activo
+      const totals = new Map(); // act -> {asist, money}
+      for (const [, {date, activities}] of weeksData) {
+        if (!inRange(date, currentRange)) continue;
+        for (const [act, obj] of activities) {
+          if (!totals.has(act)) totals.set(act, { asist: 0, money: 0 });
+          const t = totals.get(act);
+          t.asist += obj.asist;
+          t.money += obj.money;
+        }
+      }
+
+      // Ordenar por money desc
+      const rows = Array.from(totals.entries()).sort((a,b)=>b[1].money - a[1].money);
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#888;padding:18px">Sin datos en el rango</td></tr>`;
+      } else {
+        tbody.innerHTML = rows.map(([act, o]) => `
+          <tr>
+            <td>${act}</td>
+            <td class="num">${fmt(o.asist)}</td>
+            <td class="num">${fmt(o.money)} €</td>
+          </tr>
+        `).join("");
+      }
+
+      const totalAsist = rows.reduce((s,[,o])=>s+o.asist,0);
+      const totalMoney = rows.reduce((s,[,o])=>s+o.money,0);
+      totalAsistEl.textContent = fmt(totalAsist);
+      totalMoneyEl.textContent = `${fmt(totalMoney)} €`;
+
+      updated.textContent = "En vivo";
+    }
+
+    // Rango de botones
+    const now = new Date();
+    const thisFrom = firstDayOfMonth(now);
+    const thisTo   = lastDayOfMonth(now);
+    const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevFrom = firstDayOfMonth(prev);
+    const prevTo   = lastDayOfMonth(prev);
+
+    document.getElementById("btnThisMonth").addEventListener("click", () => {
+      currentRange = { from: thisFrom, to: thisTo, label: `Mes actual · ${monthLabel(now)}` };
+      render();
+    });
+    document.getElementById("btnPrevMonth").addEventListener("click", () => {
+      currentRange = { from: prevFrom, to: prevTo, label: `Último mes · ${monthLabel(prev)}` };
+      render();
+    });
+    document.getElementById("btnAll").addEventListener("click", () => {
+      currentRange = { from: null, to: null, label: "Totales (histórico)" };
+      render();
+    });
+
+    // Suscripción en vivo
+    subscribeRealtime();
+    // Rango inicial: Mes actual
+    currentRange = { from: thisFrom, to: thisTo, label: `Mes actual · ${monthLabel(now)}` };
+  </script>
+</body>
+</html>
