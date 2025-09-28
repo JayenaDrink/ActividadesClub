@@ -3,15 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prueba Firebase</title>
+  <title>Club Actividades</title>
 </head>
 <body>
-  <h1>Prueba conexión Firebase</h1>
-  <div id="resultado">Conectando...</div>
+  <h1>Registro de Actividades</h1>
 
+  <!-- Formulario -->
+  <label>Semana (fecha lunes): 
+    <input type="date" id="semanaInput">
+  </label>
+  <br><br>
+
+  <label>Actividad:
+    <select id="actividadInput">
+      <option value="Crea Club" data-precio="3">Crea Club (Lunes - 3€)</option>
+      <option value="Pintura" data-precio="3">Pintura (Lunes - 3€)</option>
+      <option value="LineDance" data-precio="3">LineDance (Lunes - 3€)</option>
+      <option value="Gym" data-precio="1">Gym (Jueves - 1€)</option>
+      <option value="Juegos" data-precio="5">Juegos (Jueves - 5€)</option>
+      <option value="Juegos No Socios" data-precio="8">Juegos No Socios (Jueves - 8€)</option>
+      <option value="Español 1" data-precio="3">Español 1 (Viernes - 3€)</option>
+      <option value="Español 2" data-precio="3">Español 2 (Viernes - 3€)</option>
+      <option value="Chat Español" data-precio="3">Chat Español (Viernes - 3€)</option>
+      <option value="Biblioteca" data-precio="1">Biblioteca (Extra - 1€)</option>
+      <option value="Ventas Productos" data-precio="0">Ventas Productos (Extra - variable)</option>
+    </select>
+  </label>
+  <br><br>
+
+  <label>Asistentes (€ en caso de Ventas):
+    <input type="number" id="asistentesInput" min="0">
+  </label>
+  <br><br>
+
+  <button id="guardarBtn">Guardar</button>
+
+  <h2>Actividades guardadas</h2>
+  <ul id="listaActividades"></ul>
+
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
@@ -25,15 +58,50 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const resultado = document.getElementById("resultado");
+    const semanaInput = document.getElementById("semanaInput");
+    const actividadInput = document.getElementById("actividadInput");
+    const asistentesInput = document.getElementById("asistentesInput");
+    const guardarBtn = document.getElementById("guardarBtn");
+    const listaActividades = document.getElementById("listaActividades");
 
-    try {
-      const querySnapshot = await getDocs(collection(db, "test"));
-      resultado.innerText = "✅ Conexión correcta a Firestore (" + querySnapshot.size + " documentos en 'test')";
-    } catch (e) {
-      resultado.innerText = "❌ Error conectando: " + e.message;
-      console.error(e);
+    async function cargarActividades(semana) {
+      listaActividades.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "semanas", semana, "actividades"));
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${data.actividad} - Asistentes: ${data.asistentes} - Subtotal: ${data.subtotal}€`;
+        listaActividades.appendChild(li);
+      });
     }
+
+    guardarBtn.addEventListener("click", async () => {
+      const semana = semanaInput.value;
+      const actividad = actividadInput.value;
+      const precio = parseFloat(actividadInput.options[actividadInput.selectedIndex].dataset.precio);
+      let asistentes = parseInt(asistentesInput.value) || 0;
+      let subtotal = 0;
+
+      if (actividad === "Ventas Productos") {
+        subtotal = asistentes; // aquí asistentes = euros
+      } else {
+        subtotal = asistentes * precio;
+      }
+
+      await addDoc(collection(db, "semanas", semana, "actividades"), {
+        actividad,
+        precio,
+        asistentes,
+        subtotal
+      });
+
+      asistentesInput.value = "";
+      await cargarActividades(semana);
+    });
+
+    semanaInput.addEventListener("change", () => {
+      if (semanaInput.value) cargarActividades(semanaInput.value);
+    });
   </script>
 </body>
 </html>
