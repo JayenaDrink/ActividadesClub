@@ -98,6 +98,9 @@
       border-radius:6px; border:1px solid #ccc;
     }
   </style>
+
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-i2skYFDoRXmA5wLw4v3w7RwCe3mJU3CwDpaJb0l8kq5QT8bE8G0m7jZr8GQ9W5g9pZ4QHq2l8vO5JwLk8S6Pgw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
   <header>
@@ -364,7 +367,6 @@
     const ventasInput = document.getElementById("Ventas Productos");
     ventasInput.addEventListener("input", async () => {
       if (semanaCerrada) {
-        // si está cerrada, no permitir edición
         ventasInput.value = ventasInput.getAttribute("data-last") || "0";
         return alert("Semana cerrada. Usa 'Limpiar Semana' para reabrir.");
       }
@@ -426,26 +428,61 @@
       await updateTotal();
     }
 
+    // Helpers Excel
+    function buildExcelData(rows) {
+      // rows: array de objetos {Actividad, Asistentes, Precio, Subtotal}
+      const ws = XLSX.utils.json_to_sheet(rows, { header: ["Actividad","Asistentes","Precio","Subtotal"] });
+      // Ajustar ancho de columnas
+      ws['!cols'] = [{wch:22},{wch:12},{wch:8},{wch:10}];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Semana");
+      return wb;
+    }
+
+    async function exportSemanaToExcel() {
+      // leer actividades de la semana
+      const semanaId = formatDate(currentMonday);
+      const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+      const rows = [];
+      let total = 0;
+      snap.forEach(d => {
+        const v = d.data();
+        rows.push({
+          Actividad: v.actividad,
+          Asistentes: (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? 0),
+          Precio: (v.actividad === "Ventas Productos") ? "" : (v.precio ?? 0),
+          Subtotal: v.subtotal ?? 0
+        });
+        total += v.subtotal ?? 0;
+      });
+      rows.push({ Actividad: "TOTAL", Asistentes: "", Precio: "", Subtotal: total });
+
+      const wb = buildExcelData(rows);
+      const filename = `semana_${semanaId}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    }
+
     // Botones acciones
     document.getElementById("limpiarBtn").addEventListener("click", async () => {
       if (!confirm("¿Seguro que quieres LIMPIAR la semana? Se borrarán los datos de actividades.")) return;
       const semanaId = formatDate(currentMonday);
       const actsSnap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
-      // borrar actividades
       for (const d of actsSnap.docs) {
         await deleteDoc(doc(db, "semanas", semanaId, "actividades", d.id));
       }
-      // marcar abierta
       await setDoc(doc(db, "semanas", semanaId), { cerrada: false });
       semanaCerrada = false;
       await loadSemana();
     });
 
     document.getElementById("cerrarBtn").addEventListener("click", async () => {
+      // 1) Exportar Excel (descarga/compartir)
+      await exportSemanaToExcel();
+      // 2) Marcar cerrada
       await setDoc(doc(db, "semanas", formatDate(currentMonday)), { cerrada: true });
       semanaCerrada = true;
       document.getElementById("main").classList.add("disabled");
-      alert("Semana cerrada. No se puede editar hasta limpiar.");
+      alert("Semana cerrada y exportada. Comparte el archivo desde tu móvil por email o WhatsApp.");
     });
 
     // Init
