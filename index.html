@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades V4</title>
+  <title>Actividades Club Amistades V5</title>
   <style>
     :root {
       --blue:#007bff;
@@ -68,7 +68,7 @@
 </head>
 <body>
   <header>
-    <h1>Actividades Club Amistades V4</h1>
+    <h1>Actividades Club Amistades V5</h1>
     <nav>
       <button class="nav-btn" id="prevSemana">⬅️</button>
       <div id="semanaTitulo">Semana</div>
@@ -266,4 +266,26 @@
     }
 
     document.getElementById("limpiarBtn").addEventListener("click", async () => {
-      if (!confirm("¿Seguro que quieres LIMPIAR la semana?"))
+      if (!confirm("¿Seguro que quieres LIMPIAR la semana?")) return;
+      const semanaId = formatDate(currentMonday);
+      const actsSnap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+      for (const d of actsSnap.docs) {
+        await deleteDoc(doc(db, "semanas", semanaId, "actividades", d.id));
+      }
+      await setDoc(doc(db, "semanas", semanaId), { cerrada: false });
+      semanaCerrada = false;
+      await loadSemana();
+    });
+
+    document.getElementById("cerrarBtn").addEventListener("click", async () => {
+      await setDoc(doc(db, "semanas", formatDate(currentMonday)), { cerrada: true });
+      semanaCerrada = true;
+      document.getElementById("main").classList.add("disabled");
+      alert("Semana cerrada. Ya no se puede editar (salvo limpiar).");
+    });
+
+    document.getElementById("exportarBtn").addEventListener("click", exportSemanaToTXT);
+    updateSemanaTitulo();
+  </script>
+</body>
+</html>
