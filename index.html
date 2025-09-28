@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades V5</title>
+  <title>Actividades Club Amistades V6</title>
   <style>
     :root {
       --blue:#007bff;
@@ -68,7 +68,7 @@
 </head>
 <body>
   <header>
-    <h1>Actividades Club Amistades V5</h1>
+    <h1>Actividades Club Amistades V6</h1>
     <nav>
       <button class="nav-btn" id="prevSemana">⬅️</button>
       <div id="semanaTitulo">Semana</div>
@@ -244,26 +244,35 @@
     }
 
     async function exportSemanaToTXT() {
-      const semanaId = formatDate(currentMonday);
-      const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
-      let total = 0;
-      const lines = [];
-      lines.push(`Reporte Semana ${semanaId}`);
-      lines.push(`Actividad | Asistentes | Precio | Subtotal`);
-      snap.forEach(d => {
-        const v = d.data();
-        const asist = (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? "");
-        const precio = (v.actividad === "Ventas Productos") ? "" : (v.precio ?? "");
-        const subtotal = v.subtotal ?? 0;
-        lines.push(`${v.actividad} | ${asist} | ${precio} | ${subtotal}`);
-        total += subtotal;
-      });
-      lines.push(`TOTAL |  |  | ${total}`);
-      const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }
+  const semanaId = formatDate(currentMonday);
+  const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+  let total = 0;
+  const lines = [];
+  lines.push(`Reporte Semana ${semanaId}`);
+  lines.push(`Actividad | Asistentes | Precio | Subtotal`);
+  snap.forEach(d => {
+    const v = d.data();
+    const asist = (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? "");
+    const precio = (v.actividad === "Ventas Productos") ? "" : (v.precio ?? "");
+    const subtotal = v.subtotal ?? 0;
+    lines.push(`${v.actividad} | ${asist} | ${precio} | ${subtotal}`);
+    total += subtotal;
+  });
+  lines.push(`TOTAL |  |  | ${total}`);
+
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  // Crear un enlace de descarga compatible con iPhone
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `semana_${semanaId}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 
     document.getElementById("limpiarBtn").addEventListener("click", async () => {
       if (!confirm("¿Seguro que quieres LIMPIAR la semana?")) return;
