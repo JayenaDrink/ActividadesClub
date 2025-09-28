@@ -4,47 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Club Actividades</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      padding: 0;
+      background: #f8f9fa;
+    }
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    header button {
+      font-size: 18px;
+      padding: 5px 10px;
+      margin: 0 10px;
+    }
+    section {
+      background: white;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .actividad {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .actividad input {
+      width: 60px;
+      padding: 5px;
+      text-align: center;
+    }
+    #total {
+      font-weight: bold;
+      font-size: 18px;
+      text-align: right;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Registro de Actividades</h1>
+  <header>
+    <button id="prevSemana">⬅️</button>
+    <h1 id="semanaTitulo">Semana</h1>
+    <button id="nextSemana">➡️</button>
+  </header>
 
-  <!-- Formulario -->
-  <label>Semana (fecha lunes): 
-    <input type="date" id="semanaInput">
-  </label>
-  <br><br>
+  <main>
+    <section id="lunes">
+      <h2>Lunes</h2>
+      <div class="actividad">
+        <span>Crea Club</span>
+        <input type="number" min="0" data-precio="3" id="Crea Club">
+      </div>
+      <div class="actividad">
+        <span>Pintura</span>
+        <input type="number" min="0" data-precio="3" id="Pintura">
+      </div>
+      <div class="actividad">
+        <span>LineDance</span>
+        <input type="number" min="0" data-precio="3" id="LineDance">
+      </div>
+    </section>
 
-  <label>Actividad:
-    <select id="actividadInput">
-      <option value="Crea Club" data-precio="3">Crea Club (Lunes - 3€)</option>
-      <option value="Pintura" data-precio="3">Pintura (Lunes - 3€)</option>
-      <option value="LineDance" data-precio="3">LineDance (Lunes - 3€)</option>
-      <option value="Gym" data-precio="1">Gym (Jueves - 1€)</option>
-      <option value="Juegos" data-precio="5">Juegos (Jueves - 5€)</option>
-      <option value="Juegos No Socios" data-precio="8">Juegos No Socios (Jueves - 8€)</option>
-      <option value="Español 1" data-precio="3">Español 1 (Viernes - 3€)</option>
-      <option value="Español 2" data-precio="3">Español 2 (Viernes - 3€)</option>
-      <option value="Chat Español" data-precio="3">Chat Español (Viernes - 3€)</option>
-      <option value="Biblioteca" data-precio="1">Biblioteca (Extra - 1€)</option>
-      <option value="Ventas Productos" data-precio="0">Ventas Productos (Extra - variable)</option>
-    </select>
-  </label>
-  <br><br>
+    <section id="jueves">
+      <h2>Jueves</h2>
+      <div class="actividad">
+        <span>Gym</span>
+        <input type="number" min="0" data-precio="1" id="Gym">
+      </div>
+      <div class="actividad">
+        <span>Juegos</span>
+        <input type="number" min="0" data-precio="5" id="Juegos">
+      </div>
+      <div class="actividad">
+        <span>Juegos No Socios</span>
+        <input type="number" min="0" data-precio="8" id="Juegos No Socios">
+      </div>
+    </section>
 
-  <label>Asistentes (€ en caso de Ventas):
-    <input type="number" id="asistentesInput" min="0">
-  </label>
-  <br><br>
+    <section id="viernes">
+      <h2>Viernes</h2>
+      <div class="actividad">
+        <span>Español 1</span>
+        <input type="number" min="0" data-precio="3" id="Español 1">
+      </div>
+      <div class="actividad">
+        <span>Español 2</span>
+        <input type="number" min="0" data-precio="3" id="Español 2">
+      </div>
+      <div class="actividad">
+        <span>Chat Español</span>
+        <input type="number" min="0" data-precio="3" id="Chat Español">
+      </div>
+    </section>
 
-  <button id="guardarBtn">Guardar</button>
+    <section id="extras">
+      <h2>Extras</h2>
+      <div class="actividad">
+        <span>Biblioteca</span>
+        <input type="number" min="0" data-precio="1" id="Biblioteca">
+      </div>
+      <div class="actividad">
+        <span>Ventas Productos (€)</span>
+        <input type="number" min="0" data-precio="0" id="Ventas Productos">
+      </div>
+    </section>
 
-  <h2>Actividades guardadas</h2>
-  <ul id="listaActividades"></ul>
+    <div id="total">Total semanal: 0€</div>
+  </main>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
@@ -58,50 +139,72 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const semanaInput = document.getElementById("semanaInput");
-    const actividadInput = document.getElementById("actividadInput");
-    const asistentesInput = document.getElementById("asistentesInput");
-    const guardarBtn = document.getElementById("guardarBtn");
-    const listaActividades = document.getElementById("listaActividades");
+    // === Manejo de semanas ===
+    let currentMonday = getMonday(new Date());
 
-    async function cargarActividades(semana) {
-      listaActividades.innerHTML = "";
-      const snapshot = await getDocs(collection(db, "semanas", semana, "actividades"));
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${data.actividad} - Asistentes: ${data.asistentes} - Subtotal: ${data.subtotal}€`;
-        listaActividades.appendChild(li);
-      });
+    function getMonday(d) {
+      d = new Date(d);
+      let day = d.getDay(),
+          diff = d.getDate() - day + (day === 0 ? -6:1); // ajustar al lunes
+      return new Date(d.setDate(diff));
     }
 
-    guardarBtn.addEventListener("click", async () => {
-      const semana = semanaInput.value;
-      const actividad = actividadInput.value;
-      const precio = parseFloat(actividadInput.options[actividadInput.selectedIndex].dataset.precio);
-      let asistentes = parseInt(asistentesInput.value) || 0;
-      let subtotal = 0;
+    function formatDate(d) {
+      return d.toISOString().split("T")[0];
+    }
 
-      if (actividad === "Ventas Productos") {
-        subtotal = asistentes; // aquí asistentes = euros
-      } else {
-        subtotal = asistentes * precio;
-      }
+    function updateSemanaTitulo() {
+      const end = new Date(currentMonday);
+      end.setDate(end.getDate() + 4);
+      document.getElementById("semanaTitulo").textContent =
+        formatDate(currentMonday) + " - " + formatDate(end);
+      loadSemana();
+    }
 
-      await addDoc(collection(db, "semanas", semana, "actividades"), {
-        actividad,
-        precio,
-        asistentes,
-        subtotal
+    document.getElementById("prevSemana").addEventListener("click", () => {
+      currentMonday.setDate(currentMonday.getDate() - 7);
+      updateSemanaTitulo();
+    });
+
+    document.getElementById("nextSemana").addEventListener("click", () => {
+      currentMonday.setDate(currentMonday.getDate() + 7);
+      updateSemanaTitulo();
+    });
+
+    // === Guardar datos ===
+    const inputs = document.querySelectorAll(".actividad input");
+    inputs.forEach(input => {
+      input.addEventListener("change", async () => {
+        const actividad = input.id;
+        const precio = parseFloat(input.dataset.precio);
+        const asistentes = parseInt(input.value) || 0;
+        let subtotal = (actividad === "Ventas Productos") ? asistentes : asistentes * precio;
+
+        await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", actividad), {
+          actividad,
+          asistentes,
+          precio,
+          subtotal
+        });
+
+        await loadSemana();
       });
-
-      asistentesInput.value = "";
-      await cargarActividades(semana);
     });
 
-    semanaInput.addEventListener("change", () => {
-      if (semanaInput.value) cargarActividades(semanaInput.value);
-    });
+    async function loadSemana() {
+      const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
+      let total = 0;
+      inputs.forEach(input => input.value = ""); // limpiar antes de pintar
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        document.getElementById(data.actividad).value = data.asistentes;
+        total += data.subtotal;
+      });
+      document.getElementById("total").textContent = "Total semanal: " + total + "€";
+    }
+
+    // Inicializar vista
+    updateSemanaTitulo();
   </script>
 </body>
 </html>
