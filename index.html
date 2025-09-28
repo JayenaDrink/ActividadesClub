@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Club Actividades</title>
+  <title>Prueba Firebase</title>
 </head>
 <body>
-  <h1>Club Actividades</h1>
-  <p>Conectando con Firebase...</p>
+  <h1>Prueba conexión Firebase</h1>
+  <div id="resultado">Conectando...</div>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    // Importar los módulos directamente desde CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
@@ -24,11 +22,18 @@
       appId: "1:888218922967:web:74da1f1cae0bbc72e4a592"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    console.log("Firebase inicializado:", app);
+    const resultado = document.getElementById("resultado");
+
+    try {
+      const querySnapshot = await getDocs(collection(db, "test"));
+      resultado.innerText = "✅ Conexión correcta a Firestore (" + querySnapshot.size + " documentos en 'test')";
+    } catch (e) {
+      resultado.innerText = "❌ Error conectando: " + e.message;
+      console.error(e);
+    }
   </script>
 </body>
 </html>
