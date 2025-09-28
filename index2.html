@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades</title>
+  <title>Actividades Club Amistades v3 </title>
   <style>
     :root {
       --blue:#007bff;
@@ -104,7 +104,7 @@
 </head>
 <body>
   <header>
-    <h1>Actividades Club Amistades</h1>
+    <h1>Actividades Club Amistades V3</h1>
     <nav>
       <button class="nav-btn" id="prevSemana">⬅️</button>
       <div id="semanaTitulo">Semana</div>
@@ -459,13 +459,17 @@
       const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `semana_${semanaId}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // En iPhone Safari no funciona a.click(), abrimos en nueva pestaña
+  const filename = `semana_${semanaId}.xlsx`;
+  const newTab = window.open(url, "_blank");
+
+  if (!newTab) {
+    // fallback si el popup es bloqueado
+    alert("No se pudo abrir la descarga, revisa los bloqueadores de ventanas emergentes.");
+  } else {
+    // Después de abrir, liberamos la URL para no consumir memoria
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
     }
 
     // Botones acciones
