@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades V6</title>
+  <title>Actividades Club Amistades V7</title>
   <style>
     :root {
       --blue:#007bff;
@@ -68,7 +68,7 @@
 </head>
 <body>
   <header>
-    <h1>Actividades Club Amistades V6</h1>
+    <h1>Actividades Club Amistades V7</h1>
     <nav>
       <button class="nav-btn" id="prevSemana">⬅️</button>
       <div id="semanaTitulo">Semana</div>
@@ -243,36 +243,93 @@
       await updateTotal();
     }
 
-    async function exportSemanaToTXT() {
-  const semanaId = formatDate(currentMonday);
-  const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
-  let total = 0;
-  const lines = [];
-  lines.push(`Reporte Semana ${semanaId}`);
-  lines.push(`Actividad | Asistentes | Precio | Subtotal`);
-  snap.forEach(d => {
-    const v = d.data();
-    const asist = (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? "");
-    const precio = (v.actividad === "Ventas Productos") ? "" : (v.precio ?? "");
-    const subtotal = v.subtotal ?? 0;
-    lines.push(`${v.actividad} | ${asist} | ${precio} | ${subtotal}`);
-    total += subtotal;
-  });
-  lines.push(`TOTAL |  |  | ${total}`);
+    async function async function exportSemanaToTXT() {
+    const semanaId = formatDate(currentMonday);
+    const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
 
-  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
+    // Recolectar filas (solo mostramos actividades con subtotal > 0 para que quede limpio)
+    const rows = [];
+    let total = 0;
+    snap.forEach(d => {
+      const v = d.data();
+      const subtotal = v.subtotal ?? 0;
+      if (subtotal > 0) {
+        rows.push({
+          Actividad: v.actividad || "",
+          Asistentes: (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? 0),
+          Precio:     (v.actividad === "Ventas Productos") ? "" : (v.precio ?? 0),
+          Subtotal: subtotal
+        });
+        total += subtotal;
+      }
+    });
 
-  // Crear un enlace de descarga compatible con iPhone
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `semana_${semanaId}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    // Cabeceras y anchos (auto en base a contenido, con mínimos agradables)
+    const headers = ["Actividad", "Asistentes", "Precio", "Subtotal"];
+    const minWidths = { Actividad: 18, Asistentes: 11, Precio: 6, Subtotal: 8 };
 
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
+    const widths = { ...minWidths };
+    for (const r of rows) {
+      widths.Actividad  = Math.max(widths.Actividad,  (r.Actividad || "").length);
+      widths.Asistentes = Math.max(widths.Asistentes, String(r.Asistentes ?? "").length);
+      widths.Precio     = Math.max(widths.Precio,     String(r.Precio ?? "").length);
+      widths.Subtotal   = Math.max(widths.Subtotal,   String(r.Subtotal ?? "").length);
+    }
+
+    // Helpers de formato
+    const padL = (s, w) => String(s ?? "").padStart(w, " ");
+    const padR = (s, w) => String(s ?? "").padEnd(w, " ");
+
+    const line =
+      `${"-".repeat(widths.Actividad)}-+-` +
+      `${"-".repeat(widths.Asistentes)}-+-` +
+      `${"-".repeat(widths.Precio)}-+-` +
+      `${"-".repeat(widths.Subtotal)}`;
+
+    const header =
+      `${padR(headers[0], widths.Actividad)} | ` +
+      `${padL(headers[1], widths.Asistentes)} | ` +
+      `${padL(headers[2], widths.Precio)} | ` +
+      `${padL(headers[3], widths.Subtotal)}`;
+
+    const body = rows.map(r =>
+      `${padR(r.Actividad, widths.Actividad)} | ` +
+      `${padL(r.Asistentes === "" ? "" : r.Asistentes, widths.Asistentes)} | ` +
+      `${padL(r.Precio === "" ? "" : r.Precio, widths.Precio)} | ` +
+      `${padL(r.Subtotal, widths.Subtotal)}`
+    ).join("\n");
+
+    const totalLine =
+      `${padR("TOTAL", widths.Actividad)} | ` +
+      `${padL("", widths.Asistentes)} | ` +
+      `${padL("", widths.Precio)} | ` +
+      `${padL(total, widths.Subtotal)} €`;
+
+    // Texto final (con BOM para acentos correctos en iPhone)
+    const title = `Reporte Semana ${semanaId}`;
+    const txt = [
+      title,
+      line,
+      header,
+      line,
+      body || "(sin actividades con importe)",
+      line,
+      totalLine
+    ].join("\n");
+
+    const BOM = "\uFEFF"; // importante para iOS
+    const blob = new Blob([BOM + txt], { type: "text/plain;charset=utf-8" });
+
+    // Descarga compatible con iPhone (enlace visible simulado)
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `semana_${semanaId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
 
     document.getElementById("limpiarBtn").addEventListener("click", async () => {
       if (!confirm("¿Seguro que quieres LIMPIAR la semana?")) return;
