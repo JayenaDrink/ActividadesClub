@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Club Actividades</title>
+</head>
+<body>
+  <h1>Club Actividades</h1>
+  <p>Conectando con Firebase...</p>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Importar los módulos directamente desde CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
+      authDomain: "actividadesclub-90119.firebaseapp.com",
+      projectId: "actividadesclub-90119",
+      storageBucket: "actividadesclub-90119.firebasestorage.app",
+      messagingSenderId: "888218922967",
+      appId: "1:888218922967:web:74da1f1cae0bbc72e4a592"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    console.log("Firebase inicializado:", app);
+  </script>
+</body>
+</html>
