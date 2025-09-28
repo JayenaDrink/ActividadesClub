@@ -92,6 +92,11 @@
     /* Estado cerrado */
     .disabled .btn-round { opacity: .45; pointer-events: none; }
     .disabled .nombre { opacity: .7; }
+    .disabled input[type="number"] { opacity: .45; pointer-events: none; }
+    input[type="number"] {
+      width:80px; padding:6px; font-size:16px; text-align:center;
+      border-radius:6px; border:1px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -248,11 +253,7 @@
         <div class="nombre">Ventas Productos (€)</div>
         <div class="right">
           <span class="money" id="subtotal-Ventas Productos">0€</span>
-          <div class="contador">
-            <button class="btn-round" data-act="Ventas Productos" data-op="-">−</button>
-            <span class="valor" id="Ventas Productos">0</span>
-            <button class="btn-round" data-act="Ventas Productos" data-op="+">+</button>
-          </div>
+          <input type="number" id="Ventas Productos" min="0" value="0">
         </div>
       </div>
     </section>
@@ -343,8 +344,7 @@
         if (op === "+") asistentes++;
         if (op === "-" && asistentes > 0) asistentes--;
 
-        // En "Ventas Productos" el número representa € directos
-        const subtotal = (act === "Ventas Productos") ? asistentes : asistentes * (precios[act] || 0);
+        const subtotal = asistentes * (precios[act] || 0);
 
         spanValor.textContent = asistentes.toString();
         spanSubtotal.textContent = `${subtotal}€`;
@@ -360,6 +360,27 @@
       });
     });
 
+    // Ventas Productos (input editable)
+    const ventasInput = document.getElementById("Ventas Productos");
+    ventasInput.addEventListener("input", async () => {
+      if (semanaCerrada) {
+        // si está cerrada, no permitir edición
+        ventasInput.value = ventasInput.getAttribute("data-last") || "0";
+        return alert("Semana cerrada. Usa 'Limpiar Semana' para reabrir.");
+      }
+      let euros = parseInt(ventasInput.value) || 0;
+      document.getElementById("subtotal-Ventas Productos").textContent = `${euros}€`;
+
+      await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", "Ventas Productos"), {
+        actividad: "Ventas Productos",
+        asistentes: null,
+        precio: 0,
+        subtotal: euros
+      });
+      ventasInput.setAttribute("data-last", euros.toString());
+      await updateTotal();
+    });
+
     async function updateTotal() {
       const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
       let total = 0;
@@ -368,8 +389,10 @@
     }
 
     async function loadSemana() {
+      const semanaId = formatDate(currentMonday);
+
       // Estado de cierre
-      const semRef = doc(db, "semanas", formatDate(currentMonday));
+      const semRef = doc(db, "semanas", semanaId);
       const semDoc = await getDoc(semRef);
       semanaCerrada = semDoc.exists() && !!semDoc.data().cerrada;
 
@@ -380,15 +403,24 @@
       // Reset UI
       document.querySelectorAll(".valor").forEach(s => s.textContent = "0");
       document.querySelectorAll(".money").forEach(s => s.textContent = "0€");
+      ventasInput.value = "0";
+      ventasInput.setAttribute("data-last", "0");
 
       // Cargar datos
-      const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
+      const snapshot = await getDocs(collection(db, "semanas", semanaId, "actividades"));
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        const valSpan = document.getElementById(data.actividad);
-        const subSpan = document.getElementById(`subtotal-${data.actividad}`);
-        if (valSpan) valSpan.textContent = (data.asistentes ?? 0).toString();
-        if (subSpan) subSpan.textContent = `${data.subtotal ?? 0}€`;
+        if (data.actividad === "Ventas Productos") {
+          const euros = data.subtotal ?? 0;
+          ventasInput.value = euros;
+          ventasInput.setAttribute("data-last", euros.toString());
+          document.getElementById("subtotal-Ventas Productos").textContent = `${euros}€`;
+        } else {
+          const valSpan = document.getElementById(data.actividad);
+          const subSpan = document.getElementById(`subtotal-${data.actividad}`);
+          if (valSpan) valSpan.textContent = (data.asistentes ?? 0).toString();
+          if (subSpan) subSpan.textContent = `${data.subtotal ?? 0}€`;
+        }
       });
 
       await updateTotal();
