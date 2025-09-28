@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Club Actividades</title>
+  <title>Actividades Club Amistades</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,12 +12,19 @@
       background: #f8f9fa;
     }
     header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    header h1 {
+      margin: 0;
+    }
+    nav {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 15px;
+      margin: 10px 0;
     }
-    header button {
+    nav button {
       font-size: 18px;
       padding: 5px 10px;
       margin: 0 10px;
@@ -38,10 +45,20 @@
       align-items: center;
       margin: 8px 0;
     }
-    .actividad input {
-      width: 60px;
-      padding: 5px;
+    .contador {
+      display: flex;
+      align-items: center;
+    }
+    .contador button {
+      font-size: 18px;
+      width: 32px;
+      height: 32px;
+    }
+    .contador span {
+      display: inline-block;
+      width: 40px;
       text-align: center;
+      font-weight: bold;
     }
     #total {
       font-weight: bold;
@@ -49,13 +66,27 @@
       text-align: right;
       margin-top: 20px;
     }
+    #acciones {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    #acciones button {
+      flex: 1;
+      margin: 0 5px;
+      padding: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <header>
-    <button id="prevSemana">⬅️</button>
-    <h1 id="semanaTitulo">Semana</h1>
-    <button id="nextSemana">➡️</button>
+    <h1>Actividades Club Amistades</h1>
+    <nav>
+      <button id="prevSemana">⬅️</button>
+      <h2 id="semanaTitulo">Semana</h2>
+      <button id="nextSemana">➡️</button>
+    </nav>
   </header>
 
   <main>
@@ -63,15 +94,15 @@
       <h2>Lunes</h2>
       <div class="actividad">
         <span>Crea Club</span>
-        <input type="number" min="0" data-precio="3" id="Crea Club">
+        <div class="contador"><button data-act="Crea Club" data-op="-" >➖</button><span id="Crea Club">0</span><button data-act="Crea Club" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Pintura</span>
-        <input type="number" min="0" data-precio="3" id="Pintura">
+        <div class="contador"><button data-act="Pintura" data-op="-">➖</button><span id="Pintura">0</span><button data-act="Pintura" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>LineDance</span>
-        <input type="number" min="0" data-precio="3" id="LineDance">
+        <div class="contador"><button data-act="LineDance" data-op="-">➖</button><span id="LineDance">0</span><button data-act="LineDance" data-op="+">➕</button></div>
       </div>
     </section>
 
@@ -79,15 +110,15 @@
       <h2>Jueves</h2>
       <div class="actividad">
         <span>Gym</span>
-        <input type="number" min="0" data-precio="1" id="Gym">
+        <div class="contador"><button data-act="Gym" data-op="-">➖</button><span id="Gym">0</span><button data-act="Gym" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Juegos</span>
-        <input type="number" min="0" data-precio="5" id="Juegos">
+        <div class="contador"><button data-act="Juegos" data-op="-">➖</button><span id="Juegos">0</span><button data-act="Juegos" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Juegos No Socios</span>
-        <input type="number" min="0" data-precio="8" id="Juegos No Socios">
+        <div class="contador"><button data-act="Juegos No Socios" data-op="-">➖</button><span id="Juegos No Socios">0</span><button data-act="Juegos No Socios" data-op="+">➕</button></div>
       </div>
     </section>
 
@@ -95,15 +126,15 @@
       <h2>Viernes</h2>
       <div class="actividad">
         <span>Español 1</span>
-        <input type="number" min="0" data-precio="3" id="Español 1">
+        <div class="contador"><button data-act="Español 1" data-op="-">➖</button><span id="Español 1">0</span><button data-act="Español 1" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Español 2</span>
-        <input type="number" min="0" data-precio="3" id="Español 2">
+        <div class="contador"><button data-act="Español 2" data-op="-">➖</button><span id="Español 2">0</span><button data-act="Español 2" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Chat Español</span>
-        <input type="number" min="0" data-precio="3" id="Chat Español">
+        <div class="contador"><button data-act="Chat Español" data-op="-">➖</button><span id="Chat Español">0</span><button data-act="Chat Español" data-op="+">➕</button></div>
       </div>
     </section>
 
@@ -111,21 +142,26 @@
       <h2>Extras</h2>
       <div class="actividad">
         <span>Biblioteca</span>
-        <input type="number" min="0" data-precio="1" id="Biblioteca">
+        <div class="contador"><button data-act="Biblioteca" data-op="-">➖</button><span id="Biblioteca">0</span><button data-act="Biblioteca" data-op="+">➕</button></div>
       </div>
       <div class="actividad">
         <span>Ventas Productos (€)</span>
-        <input type="number" min="0" data-precio="0" id="Ventas Productos">
+        <div class="contador"><button data-act="Ventas Productos" data-op="-">➖</button><span id="Ventas Productos">0</span><button data-act="Ventas Productos" data-op="+">➕</button></div>
       </div>
     </section>
 
     <div id="total">Total semanal: 0€</div>
+
+    <div id="acciones">
+      <button id="limpiarBtn">🗑️ Limpiar Semana</button>
+      <button id="cerrarBtn">🔒 Cerrar Semana</button>
+    </div>
   </main>
 
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
@@ -139,13 +175,28 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // === Manejo de semanas ===
-    let currentMonday = getMonday(new Date());
+    const precios = {
+      "Crea Club": 3, "Pintura": 3, "LineDance": 3,
+      "Gym": 1, "Juegos": 5, "Juegos No Socios": 8,
+      "Español 1": 3, "Español 2": 3, "Chat Español": 3,
+      "Biblioteca": 1, "Ventas Productos": 0
+    };
+
+    let currentMonday = getInitialMonday();
+    let semanaCerrada = false;
+
+    function getInitialMonday() {
+      let today = new Date();
+      let day = today.getDay();
+      if (day === 0) today.setDate(today.getDate() + 1); // domingo → lunes siguiente
+      if (day === 6) today.setDate(today.getDate() + 2); // sábado → lunes siguiente
+      return getMonday(today);
+    }
 
     function getMonday(d) {
       d = new Date(d);
       let day = d.getDay(),
-          diff = d.getDate() - day + (day === 0 ? -6:1); // ajustar al lunes
+          diff = d.getDate() - day + (day === 0 ? -6:1);
       return new Date(d.setDate(diff));
     }
 
@@ -171,39 +222,72 @@
       updateSemanaTitulo();
     });
 
-    // === Guardar datos ===
-    const inputs = document.querySelectorAll(".actividad input");
-    inputs.forEach(input => {
-      input.addEventListener("change", async () => {
-        const actividad = input.id;
-        const precio = parseFloat(input.dataset.precio);
-        const asistentes = parseInt(input.value) || 0;
-        let subtotal = (actividad === "Ventas Productos") ? asistentes : asistentes * precio;
+    // === Contadores ===
+    document.querySelectorAll(".contador button").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (semanaCerrada) return alert("Semana cerrada. Limpia para volver a editar.");
+        const act = btn.dataset.act;
+        const op = btn.dataset.op;
+        const span = document.getElementById(act);
+        let asistentes = parseInt(span.textContent) || 0;
+        if (op === "+" ) asistentes++;
+        if (op === "-" && asistentes > 0) asistentes--;
 
-        await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", actividad), {
-          actividad,
+        let subtotal = (act === "Ventas Productos") ? asistentes : asistentes * precios[act];
+        span.textContent = asistentes;
+
+        await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", act), {
+          actividad: act,
           asistentes,
-          precio,
+          precio: precios[act],
           subtotal
         });
-
-        await loadSemana();
+        await updateTotal();
       });
     });
 
-    async function loadSemana() {
+    async function updateTotal() {
       const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
       let total = 0;
-      inputs.forEach(input => input.value = ""); // limpiar antes de pintar
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        document.getElementById(data.actividad).value = data.asistentes;
-        total += data.subtotal;
-      });
+      snapshot.forEach(docSnap => { total += docSnap.data().subtotal; });
       document.getElementById("total").textContent = "Total semanal: " + total + "€";
     }
 
-    // Inicializar vista
+    async function loadSemana() {
+      // cargar estado semana
+      const semDoc = await getDoc(doc(db, "semanas", formatDate(currentMonday)));
+      semanaCerrada = semDoc.exists() && semDoc.data().cerrada;
+
+      // reset visual
+      document.querySelectorAll(".contador span").forEach(s => s.textContent = "0");
+
+      // cargar actividades
+      const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        document.getElementById(data.actividad).textContent = data.asistentes;
+      });
+      await updateTotal();
+    }
+
+    // Botones de acciones
+    document.getElementById("limpiarBtn").addEventListener("click", async () => {
+      const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
+      snapshot.forEach(async docSnap => {
+        await deleteDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", docSnap.id));
+      });
+      await setDoc(doc(db, "semanas", formatDate(currentMonday)), { cerrada: false });
+      semanaCerrada = false;
+      loadSemana();
+    });
+
+    document.getElementById("cerrarBtn").addEventListener("click", async () => {
+      await setDoc(doc(db, "semanas", formatDate(currentMonday)), { cerrada: true });
+      semanaCerrada = true;
+      alert("Semana cerrada. No se puede editar hasta limpiar.");
+    });
+
+    // Inicializar
     updateSemanaTitulo();
   </script>
 </body>
