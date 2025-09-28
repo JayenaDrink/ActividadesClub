@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actividades Club Amistades</title>
+  <style>
+    :root {
+      --blue:#007bff;
+      --green:#28a745;
+      --red:#dc3545;
+      --text:#222;
+      --muted:#555;
+      --bg:#f8f9fa;
+      --card:#fff;
+      --shadow:0 1px 3px rgba(0,0,0,0.1);
+      --radius:10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 10px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Header */
+    header { text-align: center; margin-bottom: 8px; }
+    header h1 { margin: 0; font-size: 22px; line-height: 1.2; }
+    nav {
+      display: flex; justify-content: center; align-items: center; gap: 14px;
+      margin: 6px 0 2px;
+    }
+    .nav-btn {
+      font-size: 18px; padding: 8px 12px; border: none; border-radius: 8px;
+      background: var(--blue); color: #fff; box-shadow: var(--shadow);
+    }
+    #semanaTitulo {
+      font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0.2px;
+    }
+
+    /* Cards por día */
+    section {
+      background: var(--card); padding: 12px; margin: 12px 0;
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    section h2 {
+      margin: 0 0 8px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 6px;
+    }
+
+    /* Fila de actividad */
+    .actividad {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .nombre { font-size: 16px; }
+    .contador {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .btn-round {
+      width: 38px; height: 38px; border-radius: 50%; border: none;
+      background: var(--blue); color: #fff; font-size: 22px; line-height: 0;
+      display: grid; place-items: center; box-shadow: var(--shadow);
+    }
+    .valor {
+      min-width: 28px; text-align: center; font-weight: bold; font-size: 17px;
+    }
+    .money {
+      font-size: 12px; color: var(--muted); min-width: 44px; text-align: right;
+    }
+    .right {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    #total {
+      font-weight: bold; font-size: 18px; text-align: right; margin-top: 6px;
+    }
+
+    /* Acciones */
+    #acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    #acciones button {
+      width: 100%; padding: 14px; font-size: 16px; font-weight: bold;
+      border: none; border-radius: 8px; color: #fff;
+      box-shadow: var(--shadow);
+    }
+    #limpiarBtn { background: var(--red); }
+    #cerrarBtn { background: var(--green); }
+
+    /* Estado cerrado */
+    .disabled .btn-round { opacity: .45; pointer-events: none; }
+    .disabled .nombre { opacity: .7; }
+    .disabled input[type="number"] { opacity: .45; pointer-events: none; }
+    input[type="number"] {
+      width:80px; padding:6px; font-size:16px; text-align:center;
+      border-radius:6px; border:1px solid #ccc;
+    }
+  </style>
+
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-i2skYFDoRXmA5wLw4v3w7RwCe3mJU3CwDpaJb0l8kq5QT8bE8G0m7jZr8GQ9W5g9pZ4QHq2l8vO5JwLk8S6Pgw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <header>
+    <h1>Actividades Club Amistades</h1>
+    <nav>
+      <button class="nav-btn" id="prevSemana">⬅️</button>
+      <div id="semanaTitulo">Semana</div>
+      <button class="nav-btn" id="nextSemana">➡️</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Lunes -->
+    <section id="lunes">
+      <h2>Lunes</h2>
+
+      <div class="actividad">
+        <div class="nombre">Crea Club</div>
+        <div class="right">
+          <span class="money" id="subtotal-Crea Club">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Crea Club" data-op="-">−</button>
+            <span class="valor" id="Crea Club">0</span>
+            <button class="btn-round" data-act="Crea Club" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Pintura</div>
+        <div class="right">
+          <span class="money" id="subtotal-Pintura">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Pintura" data-op="-">−</button>
+            <span class="valor" id="Pintura">0</span>
+            <button class="btn-round" data-act="Pintura" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">LineDance</div>
+        <div class="right">
+          <span class="money" id="subtotal-LineDance">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="LineDance" data-op="-">−</button>
+            <span class="valor" id="LineDance">0</span>
+            <button class="btn-round" data-act="LineDance" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jueves -->
+    <section id="jueves">
+      <h2>Jueves</h2>
+
+      <div class="actividad">
+        <div class="nombre">Gym</div>
+        <div class="right">
+          <span class="money" id="subtotal-Gym">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Gym" data-op="-">−</button>
+            <span class="valor" id="Gym">0</span>
+            <button class="btn-round" data-act="Gym" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Juegos</div>
+        <div class="right">
+          <span class="money" id="subtotal-Juegos">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Juegos" data-op="-">−</button>
+            <span class="valor" id="Juegos">0</span>
+            <button class="btn-round" data-act="Juegos" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Juegos No Socios</div>
+        <div class="right">
+          <span class="money" id="subtotal-Juegos No Socios">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Juegos No Socios" data-op="-">−</button>
+            <span class="valor" id="Juegos No Socios">0</span>
+            <button class="btn-round" data-act="Juegos No Socios" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Viernes -->
+    <section id="viernes">
+      <h2>Viernes</h2>
+
+      <div class="actividad">
+        <div class="nombre">Español 1</div>
+        <div class="right">
+          <span class="money" id="subtotal-Español 1">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Español 1" data-op="-">−</button>
+            <span class="valor" id="Español 1">0</span>
+            <button class="btn-round" data-act="Español 1" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Español 2</div>
+        <div class="right">
+          <span class="money" id="subtotal-Español 2">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Español 2" data-op="-">−</button>
+            <span class="valor" id="Español 2">0</span>
+            <button class="btn-round" data-act="Español 2" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Chat Español</div>
+        <div class="right">
+          <span class="money" id="subtotal-Chat Español">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Chat Español" data-op="-">−</button>
+            <span class="valor" id="Chat Español">0</span>
+            <button class="btn-round" data-act="Chat Español" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Extras -->
+    <section id="extras">
+      <h2>Extras</h2>
+
+      <div class="actividad">
+        <div class="nombre">Biblioteca</div>
+        <div class="right">
+          <span class="money" id="subtotal-Biblioteca">0€</span>
+          <div class="contador">
+            <button class="btn-round" data-act="Biblioteca" data-op="-">−</button>
+            <span class="valor" id="Biblioteca">0</span>
+            <button class="btn-round" data-act="Biblioteca" data-op="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actividad">
+        <div class="nombre">Ventas Productos (€)</div>
+        <div class="right">
+          <span class="money" id="subtotal-Ventas Productos">0€</span>
+          <input type="number" id="Ventas Productos" min="0" value="0">
+        </div>
+      </div>
+    </section>
+
+    <div id="total">Total semanal: 0€</div>
+
+    <div id="acciones">
+      <button id="limpiarBtn">🗑️ Limpiar Semana</button>
+      <button id="cerrarBtn">🔒 Cerrar Semana</button>
+    </div>
+  </main>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, getDocs, collection, deleteDoc, getDoc
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKya0_rngunoePioyooE46Vj0A402gRdQ",
+      authDomain: "actividadesclub-90119.firebaseapp.com",
+      projectId: "actividadesclub-90119",
+      storageBucket: "actividadesclub-90119.firebasestorage.app",
+      messagingSenderId: "888218922967",
+      appId: "1:888218922967:web:74da1f1cae0bbc72e4a592"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Precios por actividad (para subtotales)
+    const precios = {
+      "Crea Club": 3, "Pintura": 3, "LineDance": 3,
+      "Gym": 1, "Juegos": 5, "Juegos No Socios": 8,
+      "Español 1": 3, "Español 2": 3, "Chat Español": 3,
+      "Biblioteca": 1, "Ventas Productos": 0 // aquí el número es directamente €
+    };
+
+    let currentMonday = getInitialMonday();
+    let semanaCerrada = false;
+
+    // Lógica de semana inicial:
+    // Lunes-viernes -> semana actual. Sábado/domingo -> lunes siguiente.
+    function getInitialMonday() {
+      let today = new Date();
+      let day = today.getDay(); // 0 dom - 6 sáb
+      if (day === 6) today.setDate(today.getDate() + 2); // sábado -> lunes
+      if (day === 0) today.setDate(today.getDate() + 1); // domingo -> lunes
+      return getMonday(today);
+    }
+
+    function getMonday(d) {
+      d = new Date(d);
+      let day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+    function formatDate(d) { return d.toISOString().split("T")[0]; }
+
+    function updateSemanaTitulo() {
+      const end = new Date(currentMonday);
+      end.setDate(end.getDate() + 4);
+      document.getElementById("semanaTitulo").textContent =
+        `${formatDate(currentMonday)} - ${formatDate(end)}`;
+      loadSemana();
+    }
+
+    // Navegación de semanas
+    document.getElementById("prevSemana").addEventListener("click", () => {
+      currentMonday.setDate(currentMonday.getDate() - 7);
+      updateSemanaTitulo();
+    });
+    document.getElementById("nextSemana").addEventListener("click", () => {
+      currentMonday.setDate(currentMonday.getDate() + 7);
+      updateSemanaTitulo();
+    });
+
+    // Controles +/-
+    document.querySelectorAll(".btn-round").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (semanaCerrada) return alert("Semana cerrada. Usa 'Limpiar Semana' para reabrir.");
+        const act = btn.dataset.act;
+        const op = btn.dataset.op;
+        const spanValor = document.getElementById(act);
+        const spanSubtotal = document.getElementById(`subtotal-${act}`);
+
+        let asistentes = parseInt(spanValor.textContent) || 0;
+        if (op === "+") asistentes++;
+        if (op === "-" && asistentes > 0) asistentes--;
+
+        const subtotal = asistentes * (precios[act] || 0);
+
+        spanValor.textContent = asistentes.toString();
+        spanSubtotal.textContent = `${subtotal}€`;
+
+        await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", act), {
+          actividad: act,
+          asistentes,
+          precio: precios[act] || 0,
+          subtotal
+        });
+
+        await updateTotal();
+      });
+    });
+
+    // Ventas Productos (input editable)
+    const ventasInput = document.getElementById("Ventas Productos");
+    ventasInput.addEventListener("input", async () => {
+      if (semanaCerrada) {
+        ventasInput.value = ventasInput.getAttribute("data-last") || "0";
+        return alert("Semana cerrada. Usa 'Limpiar Semana' para reabrir.");
+      }
+      let euros = parseInt(ventasInput.value) || 0;
+      document.getElementById("subtotal-Ventas Productos").textContent = `${euros}€`;
+
+      await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", "Ventas Productos"), {
+        actividad: "Ventas Productos",
+        asistentes: null,
+        precio: 0,
+        subtotal: euros
+      });
+      ventasInput.setAttribute("data-last", euros.toString());
+      await updateTotal();
+    });
+
+    async function updateTotal() {
+      const snapshot = await getDocs(collection(db, "semanas", formatDate(currentMonday), "actividades"));
+      let total = 0;
+      snapshot.forEach(d => total += (d.data().subtotal || 0));
+      document.getElementById("total").textContent = `Total semanal: ${total}€`;
+    }
+
+    async function loadSemana() {
+      const semanaId = formatDate(currentMonday);
+
+      // Estado de cierre
+      const semRef = doc(db, "semanas", semanaId);
+      const semDoc = await getDoc(semRef);
+      semanaCerrada = semDoc.exists() && !!semDoc.data().cerrada;
+
+      // Toggle clase visual de bloqueo
+      const main = document.getElementById("main");
+      main.classList.toggle("disabled", semanaCerrada);
+
+      // Reset UI
+      document.querySelectorAll(".valor").forEach(s => s.textContent = "0");
+      document.querySelectorAll(".money").forEach(s => s.textContent = "0€");
+      ventasInput.value = "0";
+      ventasInput.setAttribute("data-last", "0");
+
+      // Cargar datos
+      const snapshot = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.actividad === "Ventas Productos") {
+          const euros = data.subtotal ?? 0;
+          ventasInput.value = euros;
+          ventasInput.setAttribute("data-last", euros.toString());
+          document.getElementById("subtotal-Ventas Productos").textContent = `${euros}€`;
+        } else {
+          const valSpan = document.getElementById(data.actividad);
+          const subSpan = document.getElementById(`subtotal-${data.actividad}`);
+          if (valSpan) valSpan.textContent = (data.asistentes ?? 0).toString();
+          if (subSpan) subSpan.textContent = `${data.subtotal ?? 0}€`;
+        }
+      });
+
+      await updateTotal();
+    }
+
+    // ==== Exportación a Excel con Blob (compatible móvil) ====
+    function buildExcelWorkbook(rows) {
+      const ws = XLSX.utils.json_to_sheet(rows, { header: ["Actividad","Asistentes","Precio","Subtotal"] });
+      ws['!cols'] = [{wch:22},{wch:12},{wch:8},{wch:10}];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Semana");
+      return wb;
+    }
+
+    async function exportSemanaToExcel() {
+      const semanaId = formatDate(currentMonday);
+      const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+      const rows = [];
+      let total = 0;
+      snap.forEach(d => {
+        const v = d.data();
+        rows.push({
+          Actividad: v.actividad,
+          Asistentes: (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? 0),
+          Precio: (v.actividad === "Ventas Productos") ? "" : (v.precio ?? 0),
+          Subtotal: v.subtotal ?? 0
+        });
+        total += v.subtotal ?? 0;
+      });
+      rows.push({ Actividad: "TOTAL", Asistentes: "", Precio: "", Subtotal: total });
+
+      const wb = buildExcelWorkbook(rows);
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `semana_${semanaId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Botones acciones
+    document.getElementById("limpiarBtn").addEventListener("click", async () => {
+      if (!confirm("¿Seguro que quieres LIMPIAR la semana? Se borrarán los datos de actividades.")) return;
+      const semanaId = formatDate(currentMonday);
+      const actsSnap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+      for (const d of actsSnap.docs) {
+        await deleteDoc(doc(db, "semanas", semanaId, "actividades", d.id));
+      }
+      await setDoc(doc(db, "semanas", semanaId), { cerrada: false });
+      semanaCerrada = false;
+      await loadSemana();
+    });
+
+    document.getElementById("cerrarBtn").addEventListener("click", async () => {
+      // 1) Exportar Excel (descarga/compartir)
+      await exportSemanaToExcel();
+      // 2) Marcar cerrada
+      await setDoc(doc(db, "semanas", formatDate(currentMonday)), { cerrada: true });
+      semanaCerrada = true;
+      document.getElementById("main").classList.add("disabled");
+      alert("Semana cerrada y exportada. Comparte el archivo desde tu móvil por email o WhatsApp.");
+    });
+
+    // Init
+    updateSemanaTitulo();
+  </script>
+</body>
+</html>
