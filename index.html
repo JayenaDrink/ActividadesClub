@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades</title>
+  <title>Actividades Club Amistades v2 </title>
   <style>
     :root {
       --blue:#007bff;
@@ -428,11 +428,9 @@
       await updateTotal();
     }
 
-    // Helpers Excel
-    function buildExcelData(rows) {
-      // rows: array de objetos {Actividad, Asistentes, Precio, Subtotal}
+    // ==== Exportación a Excel con Blob (compatible móvil) ====
+    function buildExcelWorkbook(rows) {
       const ws = XLSX.utils.json_to_sheet(rows, { header: ["Actividad","Asistentes","Precio","Subtotal"] });
-      // Ajustar ancho de columnas
       ws['!cols'] = [{wch:22},{wch:12},{wch:8},{wch:10}];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Semana");
@@ -440,7 +438,6 @@
     }
 
     async function exportSemanaToExcel() {
-      // leer actividades de la semana
       const semanaId = formatDate(currentMonday);
       const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
       const rows = [];
@@ -457,9 +454,18 @@
       });
       rows.push({ Actividad: "TOTAL", Asistentes: "", Precio: "", Subtotal: total });
 
-      const wb = buildExcelData(rows);
-      const filename = `semana_${semanaId}.xlsx`;
-      XLSX.writeFile(wb, filename);
+      const wb = buildExcelWorkbook(rows);
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `semana_${semanaId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // Botones acciones
