@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actividades Club Amistades V7</title>
+  <title>Actividades Club Amistades V8</title>
   <style>
     :root {
       --blue:#007bff;
@@ -17,58 +17,36 @@
       --radius:10px;
     }
     * { box-sizing: border-box; }
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 10px;
-      background: var(--bg);
-      color: var(--text);
-    }
+    body { font-family: Arial, Helvetica, sans-serif; margin: 10px; background: var(--bg); color: var(--text); }
     header { text-align: center; margin-bottom: 8px; }
     header h1 { margin: 0; font-size: 22px; line-height: 1.2; }
     nav { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 6px 0 2px; }
-    .nav-btn {
-      font-size: 18px; padding: 8px 12px; border: none; border-radius: 8px;
-      background: var(--blue); color: #fff; box-shadow: var(--shadow);
-    }
-    #semanaTitulo { font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0.2px; }
-    section {
-      background: var(--card); padding: 12px; margin: 12px 0;
-      border-radius: var(--radius); box-shadow: var(--shadow);
-    }
+    .nav-btn { font-size: 18px; padding: 8px 12px; border: none; border-radius: 8px; background: var(--blue); color: #fff; box-shadow: var(--shadow); }
+    #semanaTitulo { font-size: 14px; font-weight: 600; color: var(--muted); }
+    section { background: var(--card); padding: 12px; margin: 12px 0; border-radius: var(--radius); box-shadow: var(--shadow); }
     section h2 { margin: 0 0 8px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
     .actividad { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 8px 0; }
     .nombre { font-size: 16px; }
     .contador { display: flex; align-items: center; gap: 10px; }
-    .btn-round {
-      width: 38px; height: 38px; border-radius: 50%; border: none;
-      background: var(--blue); color: #fff; font-size: 22px;
-      display: grid; place-items: center; box-shadow: var(--shadow);
-    }
+    .btn-round { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--blue); color: #fff; font-size: 22px; display: grid; place-items: center; box-shadow: var(--shadow); }
     .valor { min-width: 28px; text-align: center; font-weight: bold; font-size: 17px; }
     .money { font-size: 12px; color: var(--muted); min-width: 44px; text-align: right; }
     .right { display: flex; align-items: center; gap: 10px; }
     #total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 6px; }
     #acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-    #acciones button {
-      width: 100%; padding: 14px; font-size: 16px; font-weight: bold;
-      border: none; border-radius: 8px; color: #fff;
-      box-shadow: var(--shadow);
-    }
+    #acciones button { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; color: #fff; box-shadow: var(--shadow); }
     #limpiarBtn { background: var(--red); }
     #cerrarBtn { background: var(--green); }
     #exportarBtn { background: var(--blue); }
     .disabled .btn-round { opacity: .45; pointer-events: none; }
     .disabled .nombre { opacity: .7; }
     .disabled input[type="number"] { opacity: .45; pointer-events: none; }
-    input[type="number"] {
-      width:80px; padding:6px; font-size:16px; text-align:center;
-      border-radius:6px; border:1px solid #ccc;
-    }
+    input[type="number"] { width:80px; padding:6px; font-size:16px; text-align:center; border-radius:6px; border:1px solid #ccc; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Actividades Club Amistades V7</h1>
+    <h1>Actividades Club Amistades V8</h1>
     <nav>
       <button class="nav-btn" id="prevSemana">⬅️</button>
       <div id="semanaTitulo">Semana</div>
@@ -143,6 +121,7 @@
     let currentMonday = getInitialMonday();
     let semanaCerrada = false;
 
+    // Semana inicial: L-V actual, o lunes siguiente si abres en fin de semana
     function getInitialMonday() {
       let today = new Date();
       let day = today.getDay();
@@ -165,6 +144,7 @@
       loadSemana();
     }
 
+    // Navegación
     document.getElementById("prevSemana").addEventListener("click", () => {
       currentMonday.setDate(currentMonday.getDate() - 7);
       updateSemanaTitulo();
@@ -174,6 +154,7 @@
       updateSemanaTitulo();
     });
 
+    // Contadores +/- (todas salvo Ventas Productos)
     document.querySelectorAll(".btn-round").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (semanaCerrada) return alert("Semana cerrada. Usa 'Limpiar Semana' para reabrir.");
@@ -181,19 +162,24 @@
         const op = btn.dataset.op;
         const spanValor = document.getElementById(act);
         const spanSubtotal = document.getElementById(`subtotal-${act}`);
+
         let asistentes = parseInt(spanValor.textContent) || 0;
         if (op === "+") asistentes++;
         if (op === "-" && asistentes > 0) asistentes--;
+
         const subtotal = asistentes * (precios[act] || 0);
         spanValor.textContent = asistentes.toString();
         spanSubtotal.textContent = `${subtotal}€`;
+
         await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", act), {
           actividad: act, asistentes, precio: precios[act] || 0, subtotal
         });
+
         await updateTotal();
       });
     });
 
+    // Ventas Productos (input € editable)
     const ventasInput = document.getElementById("Ventas Productos");
     ventasInput.addEventListener("input", async () => {
       if (semanaCerrada) {
@@ -202,6 +188,7 @@
       }
       let euros = parseInt(ventasInput.value) || 0;
       document.getElementById("subtotal-Ventas Productos").textContent = `${euros}€`;
+
       await setDoc(doc(db, "semanas", formatDate(currentMonday), "actividades", "Ventas Productos"), {
         actividad: "Ventas Productos", asistentes: null, precio: 0, subtotal: euros
       });
@@ -218,13 +205,20 @@
 
     async function loadSemana() {
       const semanaId = formatDate(currentMonday);
+
+      // Estado de cierre
       const semRef = doc(db, "semanas", semanaId);
       const semDoc = await getDoc(semRef);
       semanaCerrada = semDoc.exists() && !!semDoc.data().cerrada;
       document.getElementById("main").classList.toggle("disabled", semanaCerrada);
+
+      // Reset UI
       document.querySelectorAll(".valor").forEach(s => s.textContent = "0");
       document.querySelectorAll(".money").forEach(s => s.textContent = "0€");
-      ventasInput.value = "0"; ventasInput.setAttribute("data-last", "0");
+      ventasInput.value = "0";
+      ventasInput.setAttribute("data-last", "0");
+
+      // Cargar datos guardados
       const snapshot = await getDocs(collection(db, "semanas", semanaId, "actividades"));
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
@@ -240,20 +234,20 @@
           if (subSpan) subSpan.textContent = `${data.subtotal ?? 0}€`;
         }
       });
+
       await updateTotal();
     }
 
-    async function async function exportSemanaToTXT() {
-    const semanaId = formatDate(currentMonday);
-    const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
+    // ===== Exportación TXT bonita (alineada) compatible iPhone =====
+    async function exportSemanaToTXT() {
+      const semanaId = formatDate(currentMonday);
+      const snap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
 
-    // Recolectar filas (solo mostramos actividades con subtotal > 0 para que quede limpio)
-    const rows = [];
-    let total = 0;
-    snap.forEach(d => {
-      const v = d.data();
-      const subtotal = v.subtotal ?? 0;
-      if (subtotal > 0) {
+      const rows = [];
+      let total = 0;
+      snap.forEach(d => {
+        const v = d.data();
+        const subtotal = v.subtotal ?? 0;
         rows.push({
           Actividad: v.actividad || "",
           Asistentes: (v.actividad === "Ventas Productos") ? "" : (v.asistentes ?? 0),
@@ -261,78 +255,67 @@
           Subtotal: subtotal
         });
         total += subtotal;
+      });
+
+      const headers = ["Actividad", "Asistentes", "Precio", "Subtotal"];
+      const minWidths = { Actividad: 18, Asistentes: 11, Precio: 6, Subtotal: 8 };
+      const widths = { ...minWidths };
+      for (const r of rows) {
+        widths.Actividad  = Math.max(widths.Actividad,  (r.Actividad || "").length);
+        widths.Asistentes = Math.max(widths.Asistentes, String(r.Asistentes ?? "").length);
+        widths.Precio     = Math.max(widths.Precio,     String(r.Precio ?? "").length);
+        widths.Subtotal   = Math.max(widths.Subtotal,   String(r.Subtotal ?? "").length);
       }
-    });
 
-    // Cabeceras y anchos (auto en base a contenido, con mínimos agradables)
-    const headers = ["Actividad", "Asistentes", "Precio", "Subtotal"];
-    const minWidths = { Actividad: 18, Asistentes: 11, Precio: 6, Subtotal: 8 };
+      const padL = (s, w) => String(s ?? "").padStart(w, " ");
+      const padR = (s, w) => String(s ?? "").padEnd(w, " ");
 
-    const widths = { ...minWidths };
-    for (const r of rows) {
-      widths.Actividad  = Math.max(widths.Actividad,  (r.Actividad || "").length);
-      widths.Asistentes = Math.max(widths.Asistentes, String(r.Asistentes ?? "").length);
-      widths.Precio     = Math.max(widths.Precio,     String(r.Precio ?? "").length);
-      widths.Subtotal   = Math.max(widths.Subtotal,   String(r.Subtotal ?? "").length);
+      const line =
+        `${"-".repeat(widths.Actividad)}-+-` +
+        `${"-".repeat(widths.Asistentes)}-+-` +
+        `${"-".repeat(widths.Precio)}-+-` +
+        `${"-".repeat(widths.Subtotal)}`;
+
+      const header =
+        `${padR(headers[0], widths.Actividad)} | ` +
+        `${padL(headers[1], widths.Asistentes)} | ` +
+        `${padL(headers[2], widths.Precio)} | ` +
+        `${padL(headers[3], widths.Subtotal)}`;
+
+      const body = rows.map(r =>
+        `${padR(r.Actividad, widths.Actividad)} | ` +
+        `${padL(r.Asistentes === "" ? "" : r.Asistentes, widths.Asistentes)} | ` +
+        `${padL(r.Precio === "" ? "" : r.Precio, widths.Precio)} | ` +
+        `${padL(r.Subtotal, widths.Subtotal)}`
+      ).join("\n");
+
+      const totalLine =
+        `${padR("TOTAL", widths.Actividad)} | ` +
+        `${padL("", widths.Asistentes)} | ` +
+        `${padL("", widths.Precio)} | ` +
+        `${padL(total, widths.Subtotal)} €`;
+
+      const title = `Reporte Semana ${semanaId}`;
+      const txt = [title, line, header, line, body || "(sin filas)", line, totalLine].join("\n");
+
+      // BOM para acentos correctos en iPhone
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + txt], { type: "text/plain;charset=utf-8" });
+
+      // Descargar (compatible iPhone): enlace temporal y click simulado
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `semana_${semanaId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
 
-    // Helpers de formato
-    const padL = (s, w) => String(s ?? "").padStart(w, " ");
-    const padR = (s, w) => String(s ?? "").padEnd(w, " ");
-
-    const line =
-      `${"-".repeat(widths.Actividad)}-+-` +
-      `${"-".repeat(widths.Asistentes)}-+-` +
-      `${"-".repeat(widths.Precio)}-+-` +
-      `${"-".repeat(widths.Subtotal)}`;
-
-    const header =
-      `${padR(headers[0], widths.Actividad)} | ` +
-      `${padL(headers[1], widths.Asistentes)} | ` +
-      `${padL(headers[2], widths.Precio)} | ` +
-      `${padL(headers[3], widths.Subtotal)}`;
-
-    const body = rows.map(r =>
-      `${padR(r.Actividad, widths.Actividad)} | ` +
-      `${padL(r.Asistentes === "" ? "" : r.Asistentes, widths.Asistentes)} | ` +
-      `${padL(r.Precio === "" ? "" : r.Precio, widths.Precio)} | ` +
-      `${padL(r.Subtotal, widths.Subtotal)}`
-    ).join("\n");
-
-    const totalLine =
-      `${padR("TOTAL", widths.Actividad)} | ` +
-      `${padL("", widths.Asistentes)} | ` +
-      `${padL("", widths.Precio)} | ` +
-      `${padL(total, widths.Subtotal)} €`;
-
-    // Texto final (con BOM para acentos correctos en iPhone)
-    const title = `Reporte Semana ${semanaId}`;
-    const txt = [
-      title,
-      line,
-      header,
-      line,
-      body || "(sin actividades con importe)",
-      line,
-      totalLine
-    ].join("\n");
-
-    const BOM = "\uFEFF"; // importante para iOS
-    const blob = new Blob([BOM + txt], { type: "text/plain;charset=utf-8" });
-
-    // Descarga compatible con iPhone (enlace visible simulado)
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `semana_${semanaId}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-
+    // Botones
     document.getElementById("limpiarBtn").addEventListener("click", async () => {
-      if (!confirm("¿Seguro que quieres LIMPIAR la semana?")) return;
+      if (!confirm("¿Seguro que quieres LIMPIAR la semana? Se borrarán los datos.")) return;
       const semanaId = formatDate(currentMonday);
       const actsSnap = await getDocs(collection(db, "semanas", semanaId, "actividades"));
       for (const d of actsSnap.docs) {
@@ -351,6 +334,8 @@
     });
 
     document.getElementById("exportarBtn").addEventListener("click", exportSemanaToTXT);
+
+    // Init
     updateSemanaTitulo();
   </script>
 </body>
